@@ -3,7 +3,7 @@
 
 TARGET_SPECIFIC_HEADER_PATH += device/sony/hayabusa/include
 
-TARGET_KERNEL_CONFIG := cm_blue_hayabusa_defconfig
+TARGET_KERNEL_CONFIG := blue_hayabusa_defconfig
 
 COMMON_GLOBAL_CFLAGS += -DLOGO_BACKLIGHT
 
