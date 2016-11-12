@@ -51,6 +51,11 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/recovery/bootrec-device:recovery/bootrec-device
 
+# Hijack
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/system/etc/init.qcom.modem_links.sh:system/etc/init.qcom.modem_links.sh \
+    $(LOCAL_PATH)/rootdir/hijack/hijack.sh:system/bin/hijack/hijack.sh
+
 #build deviceparts
 PRODUCT_PACKAGES += \
     XperiaSettings
