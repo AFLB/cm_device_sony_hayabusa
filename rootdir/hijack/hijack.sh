@@ -251,14 +251,14 @@ then
 	SETLED 255 0 0
 	sleep 1
 	SETLED off
-    echo "======= Hijack: boot recovery =======" > /dev/kmsg
+    echo "======= Hijack: boot chargemon recovery =======" > /dev/kmsg
 	# Return path variable to default
 	export PATH="${_PATH}"
 	sleep 1
 	exec /system/bin/chargemon
 elif [ -s /temp/keycheck_up -o -e /cache/recovery/twrp -o -e /cache/recovery/command ]
 then
-	echo "======= Hijack: boot twrp =======" > /dev/kmsg
+	echo "======= Hijack: boot combine recovery =======" > /dev/kmsg
 	SETLED 0 255 255
 	rm -f /cache/recovery/twrp
 	boot_recovery
