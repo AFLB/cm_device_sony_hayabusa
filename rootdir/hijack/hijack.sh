@@ -1,14 +1,13 @@
 #!/temp/sh
 
 set +x
-_PATH="$PATH"
 export PATH="/temp:/system/xbin:/system/bin:/sbin"
 
 LED_RED="/sys/class/leds/pwr-red/brightness"
 LED_GREEN="/sys/class/leds/pwr-green/brightness"
 LED_BLUE="/sys/class/leds/pwr-blue/brightness"
 
-SETLED() {
+light() {
         if [ "$1" = "off" ]; then
                 echo "0" > ${LED_RED}
                 echo "0" > ${LED_GREEN}
@@ -20,12 +19,9 @@ SETLED() {
         fi
 }
 
-boot_rom () {
+prepare_rom () {
 	mount -o remount,rw rootfs /
 	cd /
-
-#	# Stop services
-#    ps a > /temp/log/pre_ps.txt
 
 	for SVCNAME in $(getprop | grep -E '^\[init\.svc\..*\]: \[running\]' | sed 's/\[init\.svc\.\(.*\)\]:.*/\1/g;')
 	do
@@ -47,11 +43,6 @@ boot_rom () {
 	kill -9 $(ps | grep suntrold | grep -v "grep" | awk -F' ' '{print $1}')
 
 	kill -9 $(ps | grep iddd | grep -v "grep" | awk -F' ' '{print $1}')
-
-#	ps a > /temp/log/post_ps.txt
-
-#	# umount
-#	mount > /temp/log/pre_umount.txt
 
 	## /boot/modem_fs1
 	umount -l /dev/block/mmcblk0p6
@@ -146,8 +137,6 @@ boot_rom () {
 
 	sync
 
-#	mount > /temp/log/post_umount.txt
-
 	# clean /
 	cd /
 	rm -r /sbin
@@ -156,11 +145,9 @@ boot_rom () {
 	rm -f sdcard sdcard1 ext_card init*
 
 	kill -9 1
-#	ls -laR > /temp/log/post_clean_ls.txt
-#	ps a > /temp/log/finish_ps.txt
 }
 
-boot_recovery () {
+prepare_recovery () {
 	for SVCRUNNING in $(getprop | grep -E '^\[init\.svc\..*\]: \[running\]'); do
 		SVCNAME=$(expr ${SVCRUNNING} : '\[init\.svc\.\(.*\)\]:.*')
 		if [ "${SVCNAME}" != "" ]; then
@@ -224,7 +211,7 @@ boot_recovery () {
 	umount -l /system
 }
 
-SETLED 255 255 0
+light 255 255 0
 for EVENTDEV in $(ls /dev/input/event*)
 do
 	SUFFIX="$(expr ${EVENTDEV} : '/dev/input/event\(.*\)')"
@@ -238,7 +225,7 @@ do
 	kill -9 ${CATPROC}
 done
 
-SETLED off
+light off
 
 sleep 1
 
@@ -246,41 +233,27 @@ hexdump /temp/keyevent* | grep -e '^.* 0001 0073 .... ....$' > /temp/keycheck_up
 hexdump /temp/keyevent* | grep -e '^.* 0001 0072 .... ....$' > /temp/keycheck_down
 
 # vol-, boot recovery
-if [ -s /temp/keycheck_down -o -e /cache/recovery/boot ]
-then
-	SETLED 255 0 0
-	sleep 1
-	SETLED off
-    echo "======= Hijack: boot chargemon recovery =======" > /dev/kmsg
-	# Return path variable to default
-	export PATH="${_PATH}"
-	sleep 1
-	exec /system/bin/chargemon
-elif [ -s /temp/keycheck_up -o -e /cache/recovery/twrp -o -e /cache/recovery/command ]
-then
+if [ -s /temp/keycheck_down -o -s /temp/keycheck_up -o -e /cache/recovery/boot -o -e /cache/recovery/twrp -o -e /cache/recovery/command ]; then
 	echo "======= Hijack: boot combine recovery =======" > /dev/kmsg
-	SETLED 0 255 255
-	rm -f /cache/recovery/twrp
-	boot_recovery
+	light 255 255 255
+	rm -f /cache/recovery/twrp /cache/recovery/boot /cache/recovery/command
+	prepare_recovery
 	mkdir /recovery
 	cd /recovery
 	gzip -dc /temp/ramdisk-recovery.img | cpio -i
-#	cpio -idu < /temp/recovery.cpio
 	sync
 	sleep 2
-	SETLED off
+	light off
 	pwd
 	chroot /recovery /init
 else
     echo "======= Hijack: boot ramdisk =======" > /dev/kmsg
-	boot_rom
+	prepare_rom
 	cd /
-#	gzip -dc /temp/ramdisk.img | cpio -i
 	cpio -idu < /temp/ramdisk.cpio
 	sync
 	sleep 2
 	cp /temp/ramdisk/* /
 	cp /temp/ramdisk/sbin/* /sbin
-#	ls -laR > /temp/log/post_hijack_ls.txt
 	chroot / /init
 fi
