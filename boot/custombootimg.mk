@@ -15,6 +15,6 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(PRODUCT_OUT)/kernel \
 
 INSTALLED_RECOVERYIMAGE_TARGET := $(PRODUCT_OUT)/recovery.img
 $(INSTALLED_RECOVERYIMAGE_TARGET): $(recovery_ramdisk) $(recovery_kernel)
-	@echo -e ${CL_CYN} "----- Optimizing recovery ramdisk ------"${CL_RST}
+	@echo -e ${CL_CYN}"----- Optimizing recovery ramdisk ------"${CL_RST}
 	$(hide) mkdir -p $(HIJACK_PATH)
 	$(hide) cp $(recovery_ramdisk) $(HIJACK_PATH)/
